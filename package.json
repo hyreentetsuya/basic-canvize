@@ -1,0 +1,39 @@
+{
+  "name": "basic-canvize",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sveltejs/kit": "^2.53.4",
+    "bits-ui": "^1.8.0",
+    "clsx": "^2.1.1",
+    "inversify": "^7.11.0",
+    "reflect-metadata": "^0.2.2",
+    "svelte": "^5.53.10",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^7.0.1",
+    "@sveltejs/vite-plugin-svelte": "^5.1.1",
+    "@types/node": "^25.4.0",
+    "@types/reflect-metadata": "^0.0.5",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "svelte-check": "^4.4.5",
+    "tailwindcss": "^3.4.19"
+  }
+}

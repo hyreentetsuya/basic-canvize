@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun create:*)",
+      "Bash(npx sv:*)",
+      "Bash(npx create-svelte@latest . -- --types typescript --template skeleton --no-prettier --no-eslint --no-playwright --no-vitest)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}
