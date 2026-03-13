@@ -9,7 +9,9 @@
       "Bash(npm run:*)",
       "Bash(npm uninstall:*)",
       "Bash(curl -s http://localhost:5173)",
-      "Bash(curl -s http://localhost:5173/draw)"
+      "Bash(curl -s http://localhost:5173/draw)",
+      "Bash(pkill -f \"vite dev\")",
+      "Bash(pkill -f \"npm run dev\")"
     ]
   }
 }
