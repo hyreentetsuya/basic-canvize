@@ -1,9 +1,14 @@
 <script lang="ts">
 	import type { Shape } from '$lib/stores/shapeStore';
 
-	export let shapes: Shape[];
-	export let onSelect: (shapeId: string) => void;
-	export let onDelete: (shapeId: string) => void;
+	type $Props = {
+		shapes: Shape[];
+		onSelect: (shapeId: string) => void;
+		onDelete: (shapeId: string) => void;
+		selectedShapeId: string | null;
+	};
+
+	let { shapes, onSelect, onDelete, selectedShapeId }: $Props = $props();
 
 	const shapeInfo = {
 		rectangle: { label: 'Rectangle', icon: '▭' },
@@ -21,8 +26,12 @@
 	{:else}
 		{#each shapes as shape (shape.id)}
 			<div
-				class="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
+				class="p-3 rounded-lg border hover:shadow-sm transition-all cursor-pointer"
 				onclick={() => onSelect(shape.id)}
+				class:bg-blue-50={selectedShapeId === shape.id}
+				class:border-blue-500={selectedShapeId === shape.id}
+				class:border-gray-200={selectedShapeId !== shape.id}
+				class:hover:border-blue-400={selectedShapeId !== shape.id}
 			>
 				<div class="flex items-start justify-between">
 					<div class="flex items-center gap-3">
@@ -55,8 +64,19 @@
 						class="text-gray-400 hover:text-red-500 transition-colors p-1"
 						title="Delete shape"
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+							/>
 						</svg>
 					</button>
 				</div>

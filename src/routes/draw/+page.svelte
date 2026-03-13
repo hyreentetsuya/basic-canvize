@@ -9,8 +9,19 @@
 	import { authStore } from '$lib/stores/authStore';
 
 	let mounted = false;
-	let canvasRef: HTMLCanvasElement;
-	let ctx: CanvasRenderingContext2D | null = null;
+	let currentTool: 'rectangle' | 'circle' | 'line' | 'select' | null = null;
+	let selectedShapeId: string | null = null;
+	let selectedShape:
+		| {
+				id: string;
+				type: 'rectangle' | 'circle' | 'line';
+				x: number;
+				y: number;
+				width: number;
+				height: number;
+				color: string;
+		  }
+		| null = null;
 
 	onMount(() => {
 		mounted = true;
@@ -20,17 +31,6 @@
 			goto('/');
 			return;
 		}
-
-		// Initialize canvas after DOM is ready
-		tick().then(() => {
-			if (browser) {
-				const canvas = document.getElementById('drawing-canvas') as HTMLCanvasElement;
-				if (canvas) {
-					canvasRef = canvas;
-					ctx = canvas.getContext('2d');
-				}
-			}
-		});
 	});
 
 	// Watch for auth changes
@@ -38,83 +38,86 @@
 		goto('/');
 	}
 
+	// Update selected shape when shapes or selection changes
+	$: if (mounted) {
+		if (selectedShapeId) {
+			const found = $shapes.find((s) => s.id === selectedShapeId);
+			selectedShape = found || null;
+		} else {
+			selectedShape = null;
+		}
+	}
+
 	function handleLogout() {
 		authStore.logout();
 		// The reactive statement above will handle navigation
 	}
 
-	function handleShapeSelect(shapeType: string) {
-		if (!browser || !canvasRef || !ctx) return;
+	function handleToolSelect(tool: 'rectangle' | 'circle' | 'line' | 'select' | null) {
+		currentTool = tool;
+		// Clear selection when switching to draw tools
+		if (tool !== 'select' && tool !== null) {
+			selectedShapeId = null;
+		}
+	}
 
-		// Add new shape with safe defaults
-		const newShape = {
-			id: crypto.randomUUID(),
-			type: shapeType as 'rectangle' | 'circle' | 'line',
-			x: Math.max(50, Math.min(canvasRef.width - 150, Math.random() * (canvasRef.width - 100) + 50)),
-			y: Math.max(50, Math.min(canvasRef.height - 150, Math.random() * (canvasRef.height - 100) + 50)),
-			width: shapeType === 'circle' ? 50 : 100,
-			height: shapeType === 'circle' ? 50 : 100,
-			color: getRandomColor()
-		};
+	function handleShapeSelect(shapeId: string | null) {
+		selectedShapeId = shapeId;
+		// Auto switch to select mode
+		if (shapeId) {
+			currentTool = 'select';
+		}
+	}
 
-		$shapes = [...$shapes, newShape];
-		drawAllShapes();
+	function handleShapeDraw(shape: {
+		id: string;
+		type: 'rectangle' | 'circle' | 'line';
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		color: string;
+	}) {
+		// Add the new shape to the store
+		$shapes = [...$shapes, shape];
+	}
+
+	function handleShapeUpdate(shapeId: string, updates: Partial<{ color: string }>) {
+		$shapes = $shapes.map((s) => (s.id === shapeId ? { ...s, ...updates } : s));
 	}
 
 	function handleShapeSelectFromList(shapeId: string) {
-		// Could implement selection highlighting here
-		console.log('Selected shape:', shapeId);
+		selectedShapeId = shapeId;
+		currentTool = 'select';
 	}
 
 	function handleShapeDelete(shapeId: string) {
 		$shapes = $shapes.filter((s) => s.id !== shapeId);
-		drawAllShapes();
+		if (selectedShapeId === shapeId) {
+			selectedShapeId = null;
+		}
 	}
 
 	function handleClearCanvas() {
 		$shapes = [];
-		if (ctx && canvasRef) {
-			ctx.fillStyle = '#ffffff';
-			ctx.fillRect(0, 0, canvasRef.width, canvasRef.height);
-		}
+		currentTool = null;
+		selectedShapeId = null;
 	}
 
-	function drawAllShapes() {
-		if (!ctx || !canvasRef) return;
-
-		// Clear canvas and set white background
-		ctx.fillStyle = '#ffffff';
-		ctx.fillRect(0, 0, canvasRef.width, canvasRef.height);
-
-		// Draw all shapes
-		$shapes.forEach((shape) => {
-			ctx.fillStyle = shape.color;
-			ctx.strokeStyle = '#000000';
-			ctx.lineWidth = 2;
-
-			if (shape.type === 'rectangle') {
-				ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
-				ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-			} else if (shape.type === 'circle') {
-				ctx.beginPath();
-				ctx.arc(shape.x, shape.y, shape.width / 2, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.stroke();
-			} else if (shape.type === 'line') {
-				ctx.beginPath();
-				ctx.moveTo(shape.x, shape.y);
-				ctx.lineTo(shape.x + shape.width, shape.y + shape.height);
-				ctx.strokeStyle = shape.color;
-				ctx.lineWidth = 4;
-				ctx.stroke();
-			}
-		});
-	}
-
-	function getRandomColor() {
-		const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#A29BFE', '#FD79A8'];
-		return colors[Math.floor(Math.random() * colors.length)];
-	}
+	const predefinedColors = [
+		'#FF6B6B',
+		'#4ECDC4',
+		'#45B7D1',
+		'#96CEB4',
+		'#FFEAA7',
+		'#A29BFE',
+		'#FD79A8',
+		'#F8B500',
+		'#FF6F61',
+		'#6B5B95',
+		'#88B04B',
+		'#F7CAC9'
+	];
 </script>
 
 {#if mounted}
@@ -132,8 +135,19 @@
 					title="Logout"
 					type="button"
 				>
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+						/>
 					</svg>
 				</button>
 			</div>
@@ -142,11 +156,51 @@
 					Logged in as: <strong class="truncate">{$authStore.user?.email || 'User'}</strong>
 				</p>
 			</div>
+
+			<!-- Color Picker for Selected Shape -->
+			{#if selectedShape && (selectedShape.type === 'rectangle' || selectedShape.type === 'circle')}
+				<div class="p-4 border-b border-gray-200 shrink-0">
+					<div class="flex items-center justify-between mb-2">
+						<h3 class="text-sm font-medium text-gray-700">Edit Color</h3>
+						<button
+							onclick={() => (selectedShapeId = null)}
+							class="text-gray-400 hover:text-gray-600 text-sm"
+						>
+							Close
+						</button>
+					</div>
+					<div class="grid grid-cols-6 gap-2">
+						{#each predefinedColors as color}
+							<button
+								onclick={() => handleShapeUpdate(selectedShape!.id, { color })}
+								class="w-8 h-8 rounded-lg border-2 transition-all hover:scale-110"
+								class:border-blue-500={selectedShape.color === color}
+								class:border-gray-300={selectedShape.color !== color}
+								style="background-color: {color};"
+								title={color}
+							></button>
+						{/each}
+					</div>
+					<div class="mt-3 flex items-center gap-2">
+						<label for="customColor" class="text-xs text-gray-600">Custom:</label>
+						<input
+							id="customColor"
+							type="color"
+							bind:value={selectedShape.color}
+							onchange={(e) => handleShapeUpdate(selectedShape!.id, { color: e.target.value })}
+							class="w-8 h-8 rounded cursor-pointer border-0"
+						/>
+						<span class="text-xs text-gray-500 font-mono">{selectedShape.color}</span>
+					</div>
+				</div>
+			{/if}
+
 			<div class="flex-1 overflow-y-auto">
 				<ShapeList
 					shapes={$shapes}
 					onSelect={handleShapeSelectFromList}
 					onDelete={handleShapeDelete}
+					{selectedShapeId}
 				/>
 			</div>
 		</div>
@@ -159,10 +213,12 @@
 					<CanvasEditor
 						id="drawing-canvas"
 						class="w-full h-full"
-						onShapeDraw={(data) => {
-							// Optional: Handle canvas drawing interactions
-							console.log('Canvas draw:', data);
-						}}
+						{currentTool}
+						shapes={$shapes}
+						{selectedShapeId}
+						onShapeDraw={handleShapeDraw}
+						onShapeSelect={handleShapeSelect}
+						onShapeUpdate={handleShapeUpdate}
 					/>
 				</div>
 			</div>
@@ -170,9 +226,10 @@
 			<!-- Toolbar -->
 			<div class="h-20 bg-white border-t border-gray-200 flex items-center justify-center gap-4 px-4 shrink-0">
 				<Toolbar
-					onShapeSelect={handleShapeSelect}
+					{currentTool}
 					onClear={handleClearCanvas}
 					shapeCount={$shapes.length}
+					onToolSelect={handleToolSelect}
 				/>
 			</div>
 		</div>

@@ -1,21 +1,29 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import type { Shape } from '$lib/stores/shapeStore';
+	type Tool = 'rectangle' | 'circle' | 'line' | 'select' | null;
 
-	export let onShapeSelect: (shapeType: string) => void;
-	export let onClear: () => void;
-	export let shapeCount: number;
+	type $Props = {
+		selectedTool: Tool;
+		onClear: () => void;
+		shapeCount: number;
+		onToolSelect: (tool: Tool) => void;
+	};
 
-	const dispatch = createEventDispatcher();
+	let { selectedTool, onClear, shapeCount, onToolSelect }: $Props = $props();
 
 	const tools = [
-		{ type: 'rectangle', icon: '▭', label: 'Rectangle' },
-		{ type: 'circle', icon: '●', label: 'Circle' },
-		{ type: 'line', icon: '━', label: 'Line' }
+		{ type: 'select' as const, icon: '↖', label: 'Select' },
+		{ type: 'rectangle' as const, icon: '▭', label: 'Rectangle' },
+		{ type: 'circle' as const, icon: '●', label: 'Circle' },
+		{ type: 'line' as const, icon: '━', label: 'Line' }
 	];
 
-	function handleSelectTool(type: string) {
-		onShapeSelect(type);
+	function handleSelectTool(type: Tool) {
+		// Toggle tool selection
+		if (selectedTool === type) {
+			onToolSelect(null);
+		} else {
+			onToolSelect(type);
+		}
 	}
 
 	function handleClear() {
@@ -27,17 +35,30 @@
 
 <div class="flex items-center gap-6">
 	<div class="flex items-center gap-2">
-		<span class="text-sm font-medium text-gray-600">Add Shape:</span>
+		<span class="text-sm font-medium text-gray-600">Tool:</span>
 		{#each tools as tool}
 			<button
 				onclick={() => handleSelectTool(tool.type)}
-				class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+				class="flex flex-col items-center gap-1 p-2 rounded-lg transition-colors group"
 				title={tool.label}
+				class:bg-blue-100={selectedTool === tool.type}
+				class:border-blue-400={selectedTool === tool.type}
+				class:border={selectedTool === tool.type}
 			>
-				<div class="text-3xl text-gray-700 group-hover:text-blue-600">
+				<div
+					class="text-3xl transition-colors"
+					class:text-gray-700={selectedTool !== tool.type}
+					class:text-blue-600={selectedTool === tool.type}
+				>
 					{tool.icon}
 				</div>
-				<span class="text-xs text-gray-500">{tool.label}</span>
+				<span
+					class="text-xs transition-colors"
+					class:text-gray-500={selectedTool !== tool.type}
+					class:text-blue-600={selectedTool === tool.type}
+				>
+					{tool.label}
+				</span>
 			</button>
 		{/each}
 	</div>

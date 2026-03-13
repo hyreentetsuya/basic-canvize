@@ -7,7 +7,9 @@
       "Bash(npm init:*)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s http://localhost:5173/draw)"
     ]
   }
 }
